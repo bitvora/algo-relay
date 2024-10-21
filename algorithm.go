@@ -35,8 +35,10 @@ var userFeedCache sync.Map
 
 const feedCacheDuration = 5 * time.Minute
 
-var pendingRequests = make(map[string]chan struct{})
-var pendingRequestsMutex sync.Mutex
+var (
+	pendingRequests      = make(map[string]chan struct{})
+	pendingRequestsMutex sync.Mutex
+)
 
 func GetUserFeed(ctx context.Context, userID string, limit int) ([]nostr.Event, error) {
 	now := time.Now()
@@ -121,7 +123,7 @@ func getCachedUserFeed(userID string) (CachedFeed, bool) {
 }
 
 func createFeedResult(filteredFeed []FeedPost, limit int) []nostr.Event {
-	var result []nostr.Event
+	result := make([]nostr.Event, 0, len(filteredFeed))
 	authorAppearance := make(map[string]int)
 
 	for _, feedPost := range filteredFeed {
@@ -152,11 +154,11 @@ func (r *NostrRepository) GetUserFeedByAuthors(ctx context.Context, userID strin
 		return nil, err
 	}
 
-	var feedPosts []FeedPost
-	for _, post := range posts {
+	feedPosts := make([]FeedPost, len(posts))
+	for p, post := range posts {
 		interactionCount := getInteractionCountForAuthor(post.Event.PubKey, authorInteractions)
 		score := r.calculateAuthorPostScore(post, interactionCount)
-		feedPosts = append(feedPosts, FeedPost{Event: post.Event, Score: score})
+		feedPosts[p] = FeedPost{Event: post.Event, Score: score}
 	}
 
 	sort.Slice(feedPosts, func(i, j int) bool {

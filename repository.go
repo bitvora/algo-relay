@@ -218,7 +218,6 @@ func (r *NostrRepository) fetchTopInteractedAuthors(userID string) ([]AuthorInte
 		) AS interactions
 		GROUP BY author_id
 		ORDER BY interaction_count DESC;
-
 	`
 	rows, err := r.db.QueryContext(context.Background(), query, userID)
 	if err != nil {
@@ -226,7 +225,7 @@ func (r *NostrRepository) fetchTopInteractedAuthors(userID string) ([]AuthorInte
 	}
 	defer rows.Close()
 
-	var authors []AuthorInteraction
+	authors := make([]AuthorInteraction, 0, 128)
 	for rows.Next() {
 		var authorID string
 		var interactionCount int
@@ -265,7 +264,7 @@ func (r *NostrRepository) GetViralPosts(ctx context.Context, limit int) ([]FeedP
 	}
 	defer rows.Close()
 
-	var viralPosts []FeedPost
+	viralPosts := make([]FeedPost, 0, limit)
 	for rows.Next() {
 		var rawJSON string
 		var commentCount, reactionCount, zapCount int
@@ -358,7 +357,7 @@ func (r *NostrRepository) fetchPostsFromAuthors(authorInteractions []AuthorInter
 	}
 	defer rows.Close()
 
-	var posts []EventWithMeta
+	posts := make([]EventWithMeta, 0, len(interactionCounts))
 	for rows.Next() {
 		var rawJSON string
 		var commentCount, reactionCount, zapCount, interactionCount int
